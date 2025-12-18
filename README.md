@@ -16,5 +16,5 @@
 
 # 18/12/2025
 - Initialise first commits
-- Differentiate the componets in UI
+- Separate the componets in UI
 - Add Connect And Disconnect functionality
