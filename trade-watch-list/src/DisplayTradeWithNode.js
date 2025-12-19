@@ -29,7 +29,7 @@ const DisplayTradeWithNode = () => {
 
             if (message.type === "touchline") {
                 const data = message.payload;
-                console.log("touchline: ",data);
+                console.log("touchline: ", data);
 
                 setTouchlineData(prev => ({
                     ...prev,
@@ -39,7 +39,7 @@ const DisplayTradeWithNode = () => {
 
             if (message.type === "trade") {
                 const data = message.payload;
-                console.log("trade ",data);
+                console.log("trade ", data);
 
                 setTradeData(prev => ({
                     ...prev,

@@ -18,3 +18,5 @@
 - Initialise first commits
 - Separate the componets in UI
 - Add Connect And Disconnect functionality
+- implements to display default trades
+- Stores auth data and subscribed Data on localstorage

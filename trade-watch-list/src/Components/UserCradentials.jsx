@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react'
 import { SymbolsContext } from '../Context/SymbolsContextProvider';
 import { DropDownSymbolsContext } from '../Context/DropDwonSymbolsContextProvider';
 import { AuthContext } from '../Context/AuthContextProvider';
-import { DataContext } from '../Context/DataContextProvider';
+
 import axios from 'axios';
 
 const UserCradentials = ({ ws }) => {
@@ -10,7 +10,6 @@ const UserCradentials = ({ ws }) => {
     const { symbol, setSymbol, symbolsList, setSymbolsList } = useContext(SymbolsContext);
     const { setFilteredSymbols, setIsDropdownOpen, dropDownSymbols, setDropDownSymbols, isDropdownOpen, filteredSymbols } = useContext(DropDownSymbolsContext);
     const { userId, setUserId, password, setPassword, isWsConnect, setIsWsConnect, wsUrl, setWsUrl } = useContext(AuthContext);
-    const { setTradeData } = useContext(DataContext);
 
     const fetchSymbolsfromAPI = async () => {
         try {
@@ -32,6 +31,10 @@ const UserCradentials = ({ ws }) => {
             }));
             if (symbolsList.includes(symbol.toUpperCase())) return;
             setSymbolsList((prev) => [...prev, symbol.toUpperCase()]);
+            const data = localStorage.getItem("SymbolList");
+            console.log(data);
+
+            localStorage.setItem("SymbolList", data + ',' + symbol);
             // console.log(`Subscribed to symbol: ${symbol}`);
         }
     }
@@ -48,25 +51,29 @@ const UserCradentials = ({ ws }) => {
             .filter(sym =>
                 sym.toUpperCase().includes(value.toUpperCase())
             )
-            .slice(0, 20); // limit results
+            .slice(0, 5); // limit results
 
         setFilteredSymbols(filtered);
     };
 
-    const handleConnect = (e) => {
-        e.preventDefault();
-        if (isWsConnect === true) return
-        const wsUrl = `wss://push.truedata.in:8082?user=${userId}&password=${password}`;
-        ws.current = new WebSocket(wsUrl);
+    const handleConnect = () => {
+        // e.preventDefault();
+        // if (isWsConnect === true) return
+        const wsUrll = wsUrl !== "" ? wsUrl : `wss://push.truedata.in:8082?user=${userId}&password=${password}`;
+
+        ws.current = new WebSocket(wsUrll);
         ws.current.onopen = () => {
-            console.log("WebSocket Connection Established");
+            // console.log("WebSocket Connection Established");
         }
         ws.current.onmessage = (event) => {
             let response = JSON.parse(event.data);
             if (response.message === "TrueData Real Time Data Service") {
                 console.log(response.message);
-                setWsUrl(wsUrl);
+                setWsUrl(wsUrll);
                 setIsWsConnect(true);
+                defaultData();
+                localStorage.setItem("USERID", userId);
+                localStorage.setItem("PASSWORD", password);
             } else if (response.message === 'Invalid User Credentials') {
                 console.log(response.message);
             }
@@ -84,13 +91,50 @@ const UserCradentials = ({ ws }) => {
         return ws.current.close();
     }
 
+    const defaultData = () => {
+        symbolsList.length > 0 &&
+            setTimeout(() => {
+                for (let index = 0; index < symbolsList[0].length; index++) {
+                    const item = symbolsList[0];
+                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                        ws.current.send(JSON.stringify({
+                            method: 'addsymbol',
+                            symbols: [item[index]]
+                        }));
+                        if (symbolsList.includes(symbol.toUpperCase())) return;
+                        setSymbolsList((prev) => [...prev, symbol.toUpperCase()]);
+                        // console.log(`Subscribed to symbol: ${symbol}`);
+                    }
+                }
+            }, [100]);
+    }
+
     useEffect(() => {
         fetchSymbolsfromAPI();
-    }, [])
+        if (isWsConnect) {
+            const userId = localStorage.getItem("USERID").toString();
+            setUserId(userId);
+            const password = localStorage.getItem("PASSWORD").toString();
+            setPassword(password);
+            setWsUrl(`wss://push.truedata.in:8082?user=${userId}&password=${password}`)
+            defaultData();
+
+            setTimeout(() => {
+                setSymbolsList([localStorage.getItem('SymbolList')])
+            }, [200]);
+            // handleConnect();
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem("WS_CONNECTED", isWsConnect);
+        console.log(isWsConnect);
+    }, [isWsConnect]);
+
 
     return (
         <div className="formBox bg-white shadow-md rounded-md p-4 mb-6">
-            <div className="flex flex-auto gap-4 items-center justify-content">
+            <div className="flex flex-auto gap-4 items-center justify-between">
                 <div className='flex gap-4'>
                     <input
                         name="userid"
@@ -177,7 +221,7 @@ const UserCradentials = ({ ws }) => {
                 </div>
 
             </div>
-        </div >
+        </div>
     )
 }
 

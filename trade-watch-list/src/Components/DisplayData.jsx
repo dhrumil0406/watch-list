@@ -1,11 +1,11 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext } from 'react'
 import { DataContext } from '../Context/DataContextProvider'
 import { SymbolsContext } from '../Context/SymbolsContextProvider';
 
 const DisplayData = ({ ws }) => {
 
     const { setSymbolsList, symbolColorMap } = useContext(SymbolsContext);
-    const { touchlineData, setTouchlineData, tradeData, setTradeData, totalSubscribes, touchOrTrade } = useContext(DataContext);
+    const { touchlineData, setTouchlineData, tradeData, setTradeData, totalSubscribes } = useContext(DataContext);
 
     const tradeMap = React.useMemo(() => {
         const map = {};
@@ -23,6 +23,10 @@ const DisplayData = ({ ws }) => {
                 symbols: [symbol]
             }));
 
+            const data = localStorage.getItem("SymbolList").split(',');
+            const newData = data.filter((item) => item !== symbol);
+            localStorage.setItem("SymbolList", newData);
+
             setSymbolsList((prev) => prev.filter((sym) => sym !== symbol));
 
             const symbolId = touchlineData.find(item => item[0] === symbol);
@@ -38,13 +42,14 @@ const DisplayData = ({ ws }) => {
         }
     }
 
-    useEffect(() => {
-        console.log(touchOrTrade);
-    }, [touchOrTrade])
+    // useEffect(() => {
+    //     console.log(touchOrTrade);
+    // }, [touchOrTrade])
 
-    useEffect(() => {
-        console.log("touchlineData: ", touchlineData);
-    }, [touchlineData]);
+    // useEffect(() => {
+    //     console.log("touchlineData: ", touchlineData);
+    // }, [touchlineData]);
+
     return (
         <div className="tableBox bg-white shadow-md rounded-md p-4">
             <table className="w-full border border-gray-300 text-sm">
@@ -79,7 +84,7 @@ const DisplayData = ({ ws }) => {
                         return (
                             <tr
                                 key={symbolId}
-                                className={`text-center ${symbolColorMap[symbolId] || 'text-black-600'}`}
+                                className={`text-center ${symbolColorMap[symbolId] || 'text-gray-600'}`}
                             >
                                 <td className="border px-2 py-2">{symbolId}</td>
                                 <td className="border px-2 py-2">{symbol}</td>
